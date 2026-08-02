@@ -1,13 +1,12 @@
-import React from "react";
+import React, { useCallback, useState } from "react";
 import { useLocation } from "wouter";
-import { useForm, Controller } from "react-hook-form";
+import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { useCreateBooking, getListBookingsQueryKey, getGetUpcomingBookingsQueryKey, getGetBookingStatsQueryKey } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { NativeSelect } from "@/components/ui/native-select";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
@@ -15,6 +14,7 @@ import { cn } from "@/lib/utils";
 import { Phone, User, Home, MapPin, CalendarClock, DollarSign, CheckCircle2 } from "lucide-react";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
+import { LiveCallPanel } from "@/components/live-call-panel";
 
 const bookingSchema = z.object({
   firstName: z.string().min(1, "First name is required"),
@@ -41,11 +41,20 @@ type BookingFormValues = z.infer<typeof bookingSchema>;
 
 const EXTRAS_OPTIONS = ["Oven", "Fridge", "Windows", "Laundry", "Garage", "Basement", "Inside Cabinets"];
 
+// Derive the API base URL from the current page's base path
+function getBaseUrl() {
+  const base = import.meta.env.BASE_URL ?? "/";
+  return base.endsWith("/") ? base : base + "/";
+}
+
 export default function NewBooking() {
   const [, setLocation] = useLocation();
   const queryClient = useQueryClient();
   const { toast } = useToast();
-  
+
+  // Track which fields were auto-filled so we can flash them
+  const [highlightedFields, setHighlightedFields] = useState<Set<string>>(new Set());
+
   const createBooking = useCreateBooking();
 
   const form = useForm<BookingFormValues>({
@@ -71,50 +80,66 @@ export default function NewBooking() {
     },
   });
 
+  // Called by LiveCallPanel when AI extracts fields
+  const handleFieldsExtracted = useCallback(
+    (fields: Record<string, any>, newKeys: string[]) => {
+      // Fill each extracted field into the form
+      for (const key of Object.keys(fields)) {
+        const val = fields[key];
+        if (val === undefined || val === null || val === "") continue;
+        if (Array.isArray(val) && val.length === 0) continue;
+        form.setValue(key as any, val, { shouldValidate: false, shouldDirty: true });
+      }
+
+      // Flash-highlight newly filled fields
+      setHighlightedFields(new Set(newKeys));
+      setTimeout(() => setHighlightedFields(new Set()), 2000);
+    },
+    [form]
+  );
+
   const onSubmit = (data: BookingFormValues) => {
-    // Clean up empty optional fields
     const submitData = { ...data };
-    if (isNaN(submitData.estimatedPrice as any)) {
-      submitData.estimatedPrice = undefined;
-    }
-    if (submitData.email === "") {
-      submitData.email = undefined;
-    }
-    if (submitData.postalCode === "") {
-      submitData.postalCode = undefined;
-    }
+    if (isNaN(submitData.estimatedPrice as any)) submitData.estimatedPrice = undefined;
+    if (submitData.email === "") submitData.email = undefined;
+    if (submitData.postalCode === "") submitData.postalCode = undefined;
 
     createBooking.mutate({ data: submitData as any }, {
       onSuccess: () => {
-        toast({
-          title: "Booking Created",
-          description: "The appointment has been successfully scheduled.",
-        });
+        toast({ title: "Booking Created", description: "The appointment has been successfully scheduled." });
         queryClient.invalidateQueries({ queryKey: getListBookingsQueryKey() });
         queryClient.invalidateQueries({ queryKey: getGetUpcomingBookingsQueryKey() });
         queryClient.invalidateQueries({ queryKey: getGetBookingStatsQueryKey() });
         setLocation("/");
       },
       onError: (error: any) => {
-        toast({
-          title: "Error",
-          description: error.error || "Failed to create booking",
-          variant: "destructive",
-        });
+        toast({ title: "Error", description: error.error || "Failed to create booking", variant: "destructive" });
       }
     });
   };
 
+  // Helper: CSS class to highlight auto-filled fields
+  const fieldClass = (name: string) =>
+    cn(
+      "bg-muted/30 focus:bg-background transition-all duration-300",
+      highlightedFields.has(name) && "ring-2 ring-green-400 bg-green-50 dark:bg-green-950/30"
+    );
+
   return (
-    <div className="max-w-4xl mx-auto animate-in slide-in-from-bottom-4 duration-500 pb-20">
+    <div className="max-w-4xl mx-auto animate-in slide-in-from-bottom-4 duration-500 pb-24">
       <div className="mb-6">
         <h1 className="text-3xl font-bold tracking-tight brand-gradient-text">New Booking</h1>
         <p className="text-muted-foreground">Capture appointment details quickly while on the phone.</p>
       </div>
 
+      {/* Live Call Panel */}
+      <div className="mb-6">
+        <LiveCallPanel onFieldsExtracted={handleFieldsExtracted} baseUrl={getBaseUrl()} />
+      </div>
+
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-          
+
           <div className="grid md:grid-cols-2 gap-6">
             {/* Customer Details */}
             <Card className="border-t-4 border-t-primary shadow-md">
@@ -126,14 +151,18 @@ export default function NewBooking() {
                   <FormField control={form.control} name="firstName" render={({ field }) => (
                     <FormItem>
                       <FormLabel>First Name</FormLabel>
-                      <FormControl><Input placeholder="Jane" {...field} className="bg-muted/30 focus:bg-background transition-colors" /></FormControl>
+                      <FormControl>
+                        <Input placeholder="Jane" {...field} className={fieldClass("firstName")} />
+                      </FormControl>
                       <FormMessage />
                     </FormItem>
                   )} />
                   <FormField control={form.control} name="lastName" render={({ field }) => (
                     <FormItem>
                       <FormLabel>Last Name</FormLabel>
-                      <FormControl><Input placeholder="Doe" {...field} className="bg-muted/30 focus:bg-background transition-colors" /></FormControl>
+                      <FormControl>
+                        <Input placeholder="Doe" {...field} className={fieldClass("lastName")} />
+                      </FormControl>
                       <FormMessage />
                     </FormItem>
                   )} />
@@ -145,7 +174,7 @@ export default function NewBooking() {
                       <FormControl>
                         <div className="relative">
                           <Phone className="w-4 h-4 absolute left-3 top-3.5 text-muted-foreground" />
-                          <Input type="tel" placeholder="(555) 123-4567" className="pl-9 bg-muted/30 focus:bg-background transition-colors" {...field} />
+                          <Input type="tel" placeholder="(780) 555-1234" className={cn("pl-9", fieldClass("phone"))} {...field} />
                         </div>
                       </FormControl>
                       <FormMessage />
@@ -154,7 +183,9 @@ export default function NewBooking() {
                   <FormField control={form.control} name="email" render={({ field }) => (
                     <FormItem>
                       <FormLabel>Email <span className="text-muted-foreground font-normal">(Optional)</span></FormLabel>
-                      <FormControl><Input type="email" placeholder="jane@example.com" className="bg-muted/30 focus:bg-background transition-colors" {...field} /></FormControl>
+                      <FormControl>
+                        <Input type="email" placeholder="jane@example.com" className={fieldClass("email")} {...field} />
+                      </FormControl>
                       <FormMessage />
                     </FormItem>
                   )} />
@@ -171,7 +202,9 @@ export default function NewBooking() {
                 <FormField control={form.control} name="address" render={({ field }) => (
                   <FormItem>
                     <FormLabel>Street Address</FormLabel>
-                    <FormControl><Input placeholder="123 Main St NW" className="bg-muted/30 focus:bg-background transition-colors" {...field} /></FormControl>
+                    <FormControl>
+                      <Input placeholder="123 Main St NW" className={fieldClass("address")} {...field} />
+                    </FormControl>
                     <FormMessage />
                   </FormItem>
                 )} />
@@ -179,7 +212,9 @@ export default function NewBooking() {
                   <FormField control={form.control} name="city" render={({ field }) => (
                     <FormItem>
                       <FormLabel>City</FormLabel>
-                      <FormControl><Input placeholder="Edmonton" className="bg-muted/30 focus:bg-background transition-colors" {...field} /></FormControl>
+                      <FormControl>
+                        <Input placeholder="Edmonton" className={fieldClass("city")} {...field} />
+                      </FormControl>
                       <FormMessage />
                     </FormItem>
                   )} />
@@ -200,7 +235,9 @@ export default function NewBooking() {
                   <FormField control={form.control} name="postalCode" render={({ field }) => (
                     <FormItem>
                       <FormLabel>Postal</FormLabel>
-                      <FormControl><Input placeholder="T5J" className="bg-muted/30 focus:bg-background transition-colors uppercase" {...field} /></FormControl>
+                      <FormControl>
+                        <Input placeholder="T5J" className={cn(fieldClass("postalCode"), "uppercase")} {...field} />
+                      </FormControl>
                       <FormMessage />
                     </FormItem>
                   )} />
@@ -210,8 +247,8 @@ export default function NewBooking() {
           </div>
 
           <div className="grid md:grid-cols-2 gap-6">
-             {/* Job Details */}
-             <Card className="shadow-md">
+            {/* Job Details */}
+            <Card className="shadow-md">
               <CardHeader className="pb-4 border-b">
                 <CardTitle className="text-lg flex items-center gap-2"><Home className="w-5 h-5 text-foreground" /> Job Scope</CardTitle>
               </CardHeader>
@@ -220,7 +257,10 @@ export default function NewBooking() {
                   <FormItem>
                     <FormLabel>Service Type</FormLabel>
                     <FormControl>
-                      <NativeSelect {...field} className="bg-muted/10 h-12 text-base font-medium">
+                      <NativeSelect
+                        {...field}
+                        className={cn("h-12 text-base font-medium", highlightedFields.has("serviceType") && "ring-2 ring-green-400 bg-green-50 dark:bg-green-950/30")}
+                      >
                         <option value="standard_clean">Standard Clean</option>
                         <option value="deep_clean">Deep Clean</option>
                         <option value="move_in_out">Move In/Out</option>
@@ -235,14 +275,18 @@ export default function NewBooking() {
                   <FormField control={form.control} name="bedrooms" render={({ field }) => (
                     <FormItem>
                       <FormLabel>Bedrooms</FormLabel>
-                      <FormControl><Input type="number" min="0" max="10" className="bg-muted/30 text-center font-bold text-lg" {...field} /></FormControl>
+                      <FormControl>
+                        <Input type="number" min="0" max="10" className={cn("text-center font-bold text-lg", fieldClass("bedrooms"))} {...field} />
+                      </FormControl>
                       <FormMessage />
                     </FormItem>
                   )} />
                   <FormField control={form.control} name="bathrooms" render={({ field }) => (
                     <FormItem>
                       <FormLabel>Bathrooms</FormLabel>
-                      <FormControl><Input type="number" min="1" max="10" step="0.5" className="bg-muted/30 text-center font-bold text-lg" {...field} /></FormControl>
+                      <FormControl>
+                        <Input type="number" min="1" max="10" step="0.5" className={cn("text-center font-bold text-lg", fieldClass("bathrooms"))} {...field} />
+                      </FormControl>
                       <FormMessage />
                     </FormItem>
                   )} />
@@ -252,7 +296,7 @@ export default function NewBooking() {
                   <FormItem>
                     <FormLabel>Extras</FormLabel>
                     <FormControl>
-                      <div className="flex flex-wrap gap-2 pt-1">
+                      <div className={cn("flex flex-wrap gap-2 pt-1 rounded-lg transition-all duration-300 p-1", highlightedFields.has("extras") && "ring-2 ring-green-400 bg-green-50 dark:bg-green-950/30")}>
                         {EXTRAS_OPTIONS.map(extra => {
                           const isSelected = field.value.includes(extra);
                           return (
@@ -260,15 +304,15 @@ export default function NewBooking() {
                               type="button"
                               key={extra}
                               onClick={() => {
-                                const newValue = isSelected 
+                                const newValue = isSelected
                                   ? field.value.filter(v => v !== extra)
                                   : [...field.value, extra];
                                 field.onChange(newValue);
                               }}
                               className={cn(
                                 "px-3 py-1.5 rounded-full text-sm font-medium border transition-all duration-200 active:scale-95",
-                                isSelected 
-                                  ? "bg-primary text-white border-primary shadow-sm shadow-primary/20" 
+                                isSelected
+                                  ? "bg-primary text-white border-primary shadow-sm shadow-primary/20"
                                   : "bg-background text-muted-foreground border-border hover:border-primary/50"
                               )}
                             >
@@ -295,24 +339,31 @@ export default function NewBooking() {
                     <FormField control={form.control} name="scheduledDate" render={({ field }) => (
                       <FormItem>
                         <FormLabel>Date</FormLabel>
-                        <FormControl><Input type="date" className="bg-muted/30 font-medium" {...field} /></FormControl>
+                        <FormControl>
+                          <Input type="date" className={cn("font-medium", fieldClass("scheduledDate"))} {...field} />
+                        </FormControl>
                         <FormMessage />
                       </FormItem>
                     )} />
                     <FormField control={form.control} name="scheduledTime" render={({ field }) => (
                       <FormItem>
                         <FormLabel>Time</FormLabel>
-                        <FormControl><Input type="time" className="bg-muted/30 font-medium" {...field} /></FormControl>
+                        <FormControl>
+                          <Input type="time" className={cn("font-medium", fieldClass("scheduledTime"))} {...field} />
+                        </FormControl>
                         <FormMessage />
                       </FormItem>
                     )} />
                   </div>
-                  
+
                   <FormField control={form.control} name="frequency" render={({ field }) => (
                     <FormItem>
                       <FormLabel>Frequency</FormLabel>
                       <FormControl>
-                        <NativeSelect {...field} className="bg-muted/30">
+                        <NativeSelect
+                          {...field}
+                          className={cn(highlightedFields.has("frequency") && "ring-2 ring-green-400 bg-green-50 dark:bg-green-950/30")}
+                        >
                           <option value="one_time">One Time</option>
                           <option value="weekly">Weekly</option>
                           <option value="biweekly">Bi-Weekly</option>
@@ -359,22 +410,28 @@ export default function NewBooking() {
           </div>
 
           <Card className="shadow-md">
-             <CardContent className="p-4">
-                <FormField control={form.control} name="notes" render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Internal Notes / Entry Instructions</FormLabel>
-                    <FormControl><Textarea placeholder="e.g. Key under mat, dog in backyard..." className="bg-muted/30 min-h-[100px]" {...field} /></FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )} />
-             </CardContent>
+            <CardContent className="p-4">
+              <FormField control={form.control} name="notes" render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Internal Notes / Entry Instructions</FormLabel>
+                  <FormControl>
+                    <Textarea
+                      placeholder="e.g. Key under mat, dog in backyard..."
+                      className={cn("min-h-[100px]", fieldClass("notes"))}
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )} />
+            </CardContent>
           </Card>
 
-          {/* Sticky Footer Button for Mobile/Desktop */}
+          {/* Sticky Footer */}
           <div className="fixed bottom-0 left-0 right-0 p-4 bg-background/80 backdrop-blur-md border-t shadow-[0_-10px_40px_rgba(0,0,0,0.1)] z-40 md:relative md:bg-transparent md:border-0 md:shadow-none md:p-0 md:backdrop-blur-none">
-            <Button 
-              type="submit" 
-              size="lg" 
+            <Button
+              type="submit"
+              size="lg"
               className="w-full text-xl shadow-xl shadow-primary/20 h-16 rounded-xl animate-in zoom-in-95 duration-300"
               isLoading={createBooking.isPending}
             >
