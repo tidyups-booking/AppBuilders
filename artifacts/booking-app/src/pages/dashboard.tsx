@@ -7,6 +7,12 @@ import { StatusBadge, ServiceTypeBadge } from "@/components/badges";
 import { formatDate, formatTime, formatCurrency, cn } from "@/lib/utils";
 import { DollarSign, Calendar, Clock, AlertCircle, ArrowRight, Activity, CalendarDays } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { JobberStatus } from "@/components/jobber-status";
+
+function getBaseUrl() {
+  const base = import.meta.env.BASE_URL ?? "/";
+  return base.endsWith("/") ? base : base + "/";
+}
 
 export default function Dashboard() {
   const { data: stats, isLoading: statsLoading } = useGetBookingStats();
@@ -19,12 +25,15 @@ export default function Dashboard() {
           <h1 className="text-3xl font-bold tracking-tight brand-gradient-text">Good morning, Dispatch</h1>
           <p className="text-muted-foreground mt-1 text-sm md:text-base">Here's what's happening today at 833 Tidyups.</p>
         </div>
-        <Link href="/new">
-          <Button size="lg" className="w-full md:w-auto gap-2">
-            <Calendar className="w-5 h-5" />
-            Book Customer
-          </Button>
-        </Link>
+        <div className="flex flex-wrap items-center gap-3">
+          <JobberStatus baseUrl={getBaseUrl()} />
+          <Link href="/new">
+            <Button size="lg" className="w-full md:w-auto gap-2">
+              <Calendar className="w-5 h-5" />
+              Book Customer
+            </Button>
+          </Link>
+        </div>
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">

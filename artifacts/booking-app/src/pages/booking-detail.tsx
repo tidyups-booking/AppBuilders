@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { useLocation, useParams } from "wouter";
 import { 
   useGetBooking, 
@@ -22,6 +22,12 @@ import {
   User
 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { JobberSyncCard } from "@/components/jobber-sync-card";
+
+function getBaseUrl() {
+  const base = import.meta.env.BASE_URL ?? "/";
+  return base.endsWith("/") ? base : base + "/";
+}
 
 export default function BookingDetail() {
   const params = useParams();
@@ -29,9 +35,20 @@ export default function BookingDetail() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const [jobberJobId, setJobberJobId] = useState<string | null | undefined>(undefined);
 
   const { data: booking, isLoading, isError } = useGetBooking(id, {
-    query: { enabled: !!id, queryKey: getGetBookingQueryKey(id) }
+    query: {
+      enabled: !!id,
+      queryKey: getGetBookingQueryKey(id),
+      select: (data: any) => {
+        // Sync jobberJobId into local state on first load
+        if (jobberJobId === undefined && data?.jobberJobId !== undefined) {
+          setJobberJobId(data.jobberJobId);
+        }
+        return data;
+      }
+    }
   });
 
   const updateBooking = useUpdateBooking();
@@ -233,6 +250,14 @@ export default function BookingDetail() {
 
             </CardContent>
           </Card>
+
+          {/* Jobber sync */}
+          <JobberSyncCard
+            bookingId={id}
+            jobberJobId={jobberJobId ?? booking?.jobberJobId}
+            onSynced={(jid) => setJobberJobId(jid)}
+            baseUrl={getBaseUrl()}
+          />
 
           <Card className="shadow-md">
             <CardHeader className="bg-muted/30 border-b pb-4">

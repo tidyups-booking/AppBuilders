@@ -1,6 +1,7 @@
 import { Router, type IRouter } from "express";
 import { eq, gte, lte, and, sql } from "drizzle-orm";
 import { db, bookingsTable } from "@workspace/db";
+import { syncBookingToJobber, getStoredTokens } from "../services/jobber.js";
 import {
   ListBookingsQueryParams,
   CreateBookingBody,
@@ -175,6 +176,21 @@ router.post("/bookings", async (req, res): Promise<void> => {
     .returning();
 
   res.status(201).json(CreateBookingResponse.parse(booking));
+
+  // Fire-and-forget Jobber sync (don't block the response)
+  getStoredTokens()
+    .then(async (tokens) => {
+      if (!tokens) return; // Jobber not connected — skip silently
+      const jobberRequestId = await syncBookingToJobber(booking);
+      await db
+        .update(bookingsTable)
+        .set({ jobberJobId: jobberRequestId })
+        .where(eq(bookingsTable.id, booking.id));
+      req.log.info({ bookingId: booking.id, jobberRequestId }, "Synced to Jobber");
+    })
+    .catch((err) => {
+      req.log.warn({ bookingId: booking.id, err: err.message }, "Jobber sync failed (non-fatal)");
+    });
 });
 
 // GET /bookings/:id
