@@ -3,13 +3,18 @@ info:
   # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: 833 Tidyups Booking API
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: bookings
+    description: Booking operations
+  - name: stats
+    description: Dashboard statistics
+
 paths:
   /healthz:
     get:
@@ -24,6 +29,165 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  /bookings:
+    get:
+      operationId: listBookings
+      tags: [bookings]
+      summary: List all bookings
+      parameters:
+        - in: query
+          name: status
+          schema:
+            type: string
+            enum: [pending, confirmed, in_progress, completed, cancelled]
+        - in: query
+          name: limit
+          schema:
+            type: number
+            default: 50
+        - in: query
+          name: offset
+          schema:
+            type: number
+            default: 0
+      responses:
+        "200":
+          description: List of bookings
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Booking"
+
+    post:
+      operationId: createBooking
+      tags: [bookings]
+      summary: Create a new booking
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BookingInput"
+      responses:
+        "201":
+          description: Booking created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Booking"
+        "400":
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /bookings/stats:
+    get:
+      operationId: getBookingStats
+      tags: [stats]
+      summary: Get booking dashboard stats
+      responses:
+        "200":
+          description: Booking stats summary
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BookingStats"
+
+  /bookings/upcoming:
+    get:
+      operationId: getUpcomingBookings
+      tags: [bookings]
+      summary: Get upcoming bookings (next 14 days)
+      responses:
+        "200":
+          description: Upcoming bookings
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Booking"
+
+  /bookings/{id}:
+    get:
+      operationId: getBooking
+      tags: [bookings]
+      summary: Get a single booking
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: number
+      responses:
+        "200":
+          description: Booking details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Booking"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+    patch:
+      operationId: updateBooking
+      tags: [bookings]
+      summary: Update a booking
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: number
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BookingUpdate"
+      responses:
+        "200":
+          description: Booking updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Booking"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+    delete:
+      operationId: deleteBooking
+      tags: [bookings]
+      summary: Cancel/delete a booking
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: number
+      responses:
+        "204":
+          description: Booking deleted
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
 components:
   schemas:
     HealthStatus:
@@ -34,3 +198,228 @@ components:
       required:
         - status
 
+    ErrorResponse:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: string
+
+    Booking:
+      type: object
+      required:
+        - id
+        - firstName
+        - lastName
+        - phone
+        - address
+        - city
+        - serviceType
+        - bedrooms
+        - bathrooms
+        - scheduledDate
+        - scheduledTime
+        - frequency
+        - status
+        - createdAt
+      properties:
+        id:
+          type: number
+          format: int32
+        firstName:
+          type: string
+        lastName:
+          type: string
+        phone:
+          type: string
+        email:
+          type: ["string", "null"]
+        address:
+          type: string
+        city:
+          type: string
+        province:
+          type: string
+        postalCode:
+          type: ["string", "null"]
+        serviceType:
+          type: string
+          enum: [standard_clean, deep_clean, move_in_out, post_construction]
+        bedrooms:
+          type: number
+          format: int32
+        bathrooms:
+          type: number
+          format: int32
+        extras:
+          type: array
+          items:
+            type: string
+        scheduledDate:
+          type: string
+          description: Date in YYYY-MM-DD format
+        scheduledTime:
+          type: string
+          description: Time in HH:MM format
+        frequency:
+          type: string
+          enum: [one_time, weekly, biweekly, monthly]
+        estimatedPrice:
+          type: ["number", "null"]
+        notes:
+          type: ["string", "null"]
+        status:
+          type: string
+          enum: [pending, confirmed, in_progress, completed, cancelled]
+        jobberJobId:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+          format: date-time
+
+    BookingInput:
+      type: object
+      required:
+        - firstName
+        - lastName
+        - phone
+        - address
+        - city
+        - serviceType
+        - bedrooms
+        - bathrooms
+        - scheduledDate
+        - scheduledTime
+        - frequency
+      properties:
+        firstName:
+          type: string
+          minLength: 1
+        lastName:
+          type: string
+          minLength: 1
+        phone:
+          type: string
+          minLength: 7
+        email:
+          type: string
+        address:
+          type: string
+          minLength: 1
+        city:
+          type: string
+          minLength: 1
+        province:
+          type: string
+          default: "AB"
+        postalCode:
+          type: string
+        serviceType:
+          type: string
+          enum: [standard_clean, deep_clean, move_in_out, post_construction]
+        bedrooms:
+          type: number
+          format: int32
+          minimum: 0
+          maximum: 10
+        bathrooms:
+          type: number
+          format: int32
+          minimum: 1
+          maximum: 10
+        extras:
+          type: array
+          items:
+            type: string
+          default: []
+        scheduledDate:
+          type: string
+        scheduledTime:
+          type: string
+        frequency:
+          type: string
+          enum: [one_time, weekly, biweekly, monthly]
+        estimatedPrice:
+          type: number
+        notes:
+          type: string
+        status:
+          type: string
+          enum: [pending, confirmed, in_progress, completed, cancelled]
+          default: pending
+
+    BookingUpdate:
+      type: object
+      properties:
+        firstName:
+          type: string
+        lastName:
+          type: string
+        phone:
+          type: string
+        email:
+          type: string
+        address:
+          type: string
+        city:
+          type: string
+        province:
+          type: string
+        postalCode:
+          type: string
+        serviceType:
+          type: string
+          enum: [standard_clean, deep_clean, move_in_out, post_construction]
+        bedrooms:
+          type: number
+        bathrooms:
+          type: number
+        extras:
+          type: array
+          items:
+            type: string
+        scheduledDate:
+          type: string
+        scheduledTime:
+          type: string
+        frequency:
+          type: string
+          enum: [one_time, weekly, biweekly, monthly]
+        estimatedPrice:
+          type: number
+        notes:
+          type: string
+        status:
+          type: string
+          enum: [pending, confirmed, in_progress, completed, cancelled]
+        jobberJobId:
+          type: string
+
+    BookingStats:
+      type: object
+      required:
+        - totalBookings
+        - upcomingCount
+        - completedCount
+        - pendingCount
+        - cancelledCount
+        - totalRevenue
+        - thisWeekCount
+        - thisMonthCount
+      properties:
+        totalBookings:
+          type: number
+        upcomingCount:
+          type: number
+        completedCount:
+          type: number
+        pendingCount:
+          type: number
+        cancelledCount:
+          type: number
+        totalRevenue:
+          type: number
+        thisWeekCount:
+          type: number
+        thisMonthCount:
+          type: number

@@ -1,0 +1,272 @@
+import React from "react";
+import { useLocation, useParams } from "wouter";
+import { 
+  useGetBooking, 
+  useUpdateBooking, 
+  useDeleteBooking,
+  getGetBookingQueryKey,
+  getListBookingsQueryKey,
+  getGetUpcomingBookingsQueryKey,
+  getGetBookingStatsQueryKey
+} from "@workspace/api-client-react";
+import { useQueryClient } from "@tanstack/react-query";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { StatusBadge, ServiceTypeBadge } from "@/components/badges";
+import { formatDate, formatTime, formatCurrency } from "@/lib/utils";
+import { NativeSelect } from "@/components/ui/native-select";
+import { useToast } from "@/hooks/use-toast";
+import { 
+  ArrowLeft, MapPin, Phone, Mail, Home, Clock, Calendar, 
+  Edit3, Trash2, CheckCircle2, AlertCircle, FileText, 
+  User
+} from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
+
+export default function BookingDetail() {
+  const params = useParams();
+  const id = Number(params.id);
+  const [, setLocation] = useLocation();
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  const { data: booking, isLoading, isError } = useGetBooking(id, {
+    query: { enabled: !!id, queryKey: getGetBookingQueryKey(id) }
+  });
+
+  const updateBooking = useUpdateBooking();
+  const deleteBooking = useDeleteBooking();
+
+  if (isError) {
+    return (
+      <div className="text-center py-12">
+        <AlertCircle className="w-12 h-12 text-destructive mx-auto mb-4" />
+        <h2 className="text-2xl font-bold">Booking Not Found</h2>
+        <p className="text-muted-foreground mt-2">The booking you are looking for does not exist or was deleted.</p>
+        <Button className="mt-6" variant="outline" onClick={() => setLocation("/bookings")}>
+          <ArrowLeft className="w-4 h-4 mr-2" /> Back to Bookings
+        </Button>
+      </div>
+    );
+  }
+
+  const handleStatusChange = (newStatus: string) => {
+    updateBooking.mutate({
+      id,
+      data: { status: newStatus as any }
+    }, {
+      onSuccess: (data) => {
+        toast({ title: "Status Updated", description: `Booking marked as ${newStatus}` });
+        queryClient.setQueryData(getGetBookingQueryKey(id), data);
+        queryClient.invalidateQueries({ queryKey: getListBookingsQueryKey() });
+        queryClient.invalidateQueries({ queryKey: getGetUpcomingBookingsQueryKey() });
+        queryClient.invalidateQueries({ queryKey: getGetBookingStatsQueryKey() });
+      },
+      onError: () => {
+        toast({ title: "Error", description: "Failed to update status", variant: "destructive" });
+      }
+    });
+  };
+
+  const handleDelete = () => {
+    if (confirm("Are you sure you want to completely delete this booking? This action cannot be undone.")) {
+      deleteBooking.mutate({ id }, {
+        onSuccess: () => {
+          toast({ title: "Booking Deleted" });
+          queryClient.invalidateQueries({ queryKey: getListBookingsQueryKey() });
+          queryClient.invalidateQueries({ queryKey: getGetUpcomingBookingsQueryKey() });
+          queryClient.invalidateQueries({ queryKey: getGetBookingStatsQueryKey() });
+          setLocation("/bookings");
+        },
+        onError: () => {
+          toast({ title: "Error", description: "Failed to delete booking", variant: "destructive" });
+        }
+      });
+    }
+  };
+
+  if (isLoading || !booking) {
+    return (
+      <div className="space-y-6">
+        <Skeleton className="h-8 w-1/4" />
+        <Skeleton className="h-[400px] w-full" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="max-w-5xl mx-auto animate-in slide-in-from-bottom-4 duration-500 pb-10">
+      
+      {/* Header Actions */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
+        <Button variant="ghost" onClick={() => window.history.back()} className="gap-2 -ml-4 hover:bg-transparent">
+          <ArrowLeft className="w-4 h-4" /> Back
+        </Button>
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 bg-muted/50 p-1.5 rounded-lg border">
+            <span className="text-sm font-medium text-muted-foreground px-2">Update Status:</span>
+            <NativeSelect 
+              value={booking.status}
+              onChange={(e) => handleStatusChange(e.target.value)}
+              disabled={updateBooking.isPending}
+              className="h-8 text-sm py-1 font-semibold bg-background border-none shadow-sm min-w-[140px]"
+            >
+              <option value="pending">Pending</option>
+              <option value="confirmed">Confirmed</option>
+              <option value="in_progress">In Progress</option>
+              <option value="completed">Completed</option>
+              <option value="cancelled">Cancelled</option>
+            </NativeSelect>
+          </div>
+          <Button variant="destructive" size="icon" onClick={handleDelete} title="Delete Booking">
+            <Trash2 className="w-4 h-4" />
+          </Button>
+        </div>
+      </div>
+
+      {/* Main Content Grid */}
+      <div className="grid lg:grid-cols-[2fr_1fr] gap-6">
+        
+        <div className="space-y-6">
+          {/* Main Info Card */}
+          <Card className="shadow-lg border-t-4 border-t-primary overflow-hidden">
+            <div className="bg-primary/5 p-6 border-b flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+              <div>
+                <h1 className="text-3xl font-bold font-serif mb-2">{booking.firstName} {booking.lastName}</h1>
+                <div className="flex flex-wrap gap-2 items-center">
+                  <StatusBadge status={booking.status} className="text-sm px-3 py-1" />
+                  <ServiceTypeBadge type={booking.serviceType} className="text-sm px-3 py-1" />
+                </div>
+              </div>
+              <div className="text-right bg-background p-4 rounded-xl shadow-sm border text-center min-w-[120px]">
+                <div className="text-sm text-muted-foreground font-medium mb-1 uppercase tracking-wider">Estimated</div>
+                <div className="text-2xl font-black text-primary">{formatCurrency(booking.estimatedPrice)}</div>
+              </div>
+            </div>
+
+            <CardContent className="p-0">
+              <div className="grid sm:grid-cols-2 divide-y sm:divide-y-0 sm:divide-x">
+                {/* Contact */}
+                <div className="p-6 space-y-4">
+                  <h3 className="font-semibold flex items-center gap-2 text-muted-foreground uppercase text-xs tracking-wider"><User className="w-4 h-4" /> Contact Details</h3>
+                  <div className="space-y-3">
+                    <div className="flex items-start gap-3">
+                      <Phone className="w-5 h-5 text-muted-foreground mt-0.5" />
+                      <div>
+                        <div className="font-medium text-lg">{booking.phone}</div>
+                        <div className="text-sm text-muted-foreground">Mobile</div>
+                      </div>
+                    </div>
+                    {booking.email && (
+                      <div className="flex items-start gap-3">
+                        <Mail className="w-5 h-5 text-muted-foreground mt-0.5" />
+                        <div>
+                          <div className="font-medium">{booking.email}</div>
+                          <div className="text-sm text-muted-foreground">Email</div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Location */}
+                <div className="p-6 space-y-4 bg-muted/10">
+                  <h3 className="font-semibold flex items-center gap-2 text-muted-foreground uppercase text-xs tracking-wider"><MapPin className="w-4 h-4" /> Location</h3>
+                  <div className="flex items-start gap-3">
+                    <div className="bg-background border shadow-sm p-3 rounded-lg w-full">
+                      <div className="font-bold text-lg mb-1">{booking.address}</div>
+                      <div className="text-muted-foreground">
+                        {booking.city}, {booking.province} {booking.postalCode}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Notes Card */}
+          {booking.notes && (
+            <Card className="bg-amber-50/50 border-amber-200 dark:bg-amber-900/10 dark:border-amber-900/30 shadow-sm">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-lg flex items-center gap-2 text-amber-800 dark:text-amber-500">
+                  <FileText className="w-5 h-5" /> Important Notes
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="whitespace-pre-wrap text-amber-900/80 dark:text-amber-200 leading-relaxed font-medium">
+                  {booking.notes}
+                </p>
+              </CardContent>
+            </Card>
+          )}
+        </div>
+
+        {/* Sidebar Info */}
+        <div className="space-y-6">
+          <Card className="shadow-md">
+            <CardHeader className="bg-muted/30 border-b pb-4">
+              <CardTitle className="text-lg flex items-center gap-2"><Calendar className="w-5 h-5" /> Schedule</CardTitle>
+            </CardHeader>
+            <CardContent className="p-6 space-y-6">
+              
+              <div className="flex items-center gap-4 bg-primary/10 p-4 rounded-xl border border-primary/20">
+                 <div className="bg-background rounded-md shadow-sm w-14 h-14 flex flex-col items-center justify-center font-serif flex-shrink-0">
+                   <div className="text-xs font-bold text-primary uppercase bg-primary/10 w-full text-center py-0.5 rounded-t-md">{new Date(booking.scheduledDate).toLocaleDateString('en-US', { month: 'short' })}</div>
+                   <div className="text-xl font-black">{new Date(booking.scheduledDate).getDate()}</div>
+                 </div>
+                 <div>
+                   <div className="font-bold text-lg">{formatDate(booking.scheduledDate)}</div>
+                   <div className="text-muted-foreground flex items-center gap-1.5"><Clock className="w-4 h-4" /> {formatTime(booking.scheduledTime)}</div>
+                 </div>
+              </div>
+
+              <div className="flex justify-between items-center py-3 border-b">
+                <span className="text-muted-foreground">Frequency</span>
+                <span className="font-semibold capitalize bg-muted px-2.5 py-1 rounded-md text-sm">{booking.frequency.replace('_', ' ')}</span>
+              </div>
+              
+              <div className="flex justify-between items-center py-2">
+                <span className="text-muted-foreground">Created</span>
+                <span className="text-sm font-medium">{new Date(booking.createdAt).toLocaleDateString()}</span>
+              </div>
+
+            </CardContent>
+          </Card>
+
+          <Card className="shadow-md">
+            <CardHeader className="bg-muted/30 border-b pb-4">
+              <CardTitle className="text-lg flex items-center gap-2"><Home className="w-5 h-5" /> Property Details</CardTitle>
+            </CardHeader>
+            <CardContent className="p-6 space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="bg-background border p-3 rounded-lg text-center shadow-sm">
+                  <div className="text-2xl font-black text-foreground">{booking.bedrooms}</div>
+                  <div className="text-xs text-muted-foreground uppercase font-semibold mt-1">Bedrooms</div>
+                </div>
+                <div className="bg-background border p-3 rounded-lg text-center shadow-sm">
+                  <div className="text-2xl font-black text-foreground">{booking.bathrooms}</div>
+                  <div className="text-xs text-muted-foreground uppercase font-semibold mt-1">Bathrooms</div>
+                </div>
+              </div>
+
+              {booking.extras && booking.extras.length > 0 && (
+                <div className="pt-4 border-t">
+                  <h4 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">Included Extras</h4>
+                  <div className="flex flex-wrap gap-2">
+                    {booking.extras.map(extra => (
+                      <span key={extra} className="bg-secondary/10 text-secondary border border-secondary/20 px-2.5 py-1 rounded-full text-xs font-bold">
+                        {extra}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+
+      </div>
+    </div>
+  );
+}

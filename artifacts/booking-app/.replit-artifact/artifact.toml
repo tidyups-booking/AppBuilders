@@ -1,0 +1,28 @@
+kind = "web"
+previewPath = "/"
+title = "833 Tidyups Booking"
+description = "An internal quick-booking tool for 833 Tidyups home cleaning service. Lets staff book a new customer appointment in under 60 seconds when they call — captures customer info, address, service type, home size, preferred date/time, and sends the booking to Jobber."
+version = "1.0.0"
+id = "artifacts/booking-app"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 20508
+
+[services.development]
+run = "pnpm --filter @workspace/booking-app run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/booking-app", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/booking-app/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "20508"
+BASE_PATH = "/"
