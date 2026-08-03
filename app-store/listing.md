@@ -61,6 +61,8 @@ This is an internal staff tool for 833 Tidyups (Edmonton, AB) used to book and m
   2. All Bookings — filterable job list
   3. New Booking — 60-second booking form
   4. Booking Detail — status updates + tap-to-call
+- `android/screenshots/phone/` — 4 Google Play phone screenshots at 1080×2340 (same four screens)
+- `android/feature-graphic/feature-graphic-1024x500.png` — Google Play feature graphic (required for Play listing promotion)
 - `raw/` — original captures (source files, not for upload)
 - `listing.md` — this file
 - `privacy-policy.md` — starter privacy policy to host on your site
