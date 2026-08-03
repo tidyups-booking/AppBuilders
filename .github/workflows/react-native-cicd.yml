@@ -56,7 +56,7 @@ jobs:
         shell: bash
         env:
           PLATFORM: ${{ github.event.inputs.platform || 'android' }}
-          BUILD_TYPE: ${{ github.event.inputs.buildType || 'development' }}
+          BUILD_TYPE: ${{ github.event.inputs.buildType || 'android-apk' }}
         run: |
           case "$PLATFORM:$BUILD_TYPE" in
             android:development|android:android-apk|android:android-aab|android:all)
