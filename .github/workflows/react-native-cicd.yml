@@ -139,11 +139,11 @@ jobs:
         run: mkdir -p build
 
       - name: Build development APK
-        if: ${{ matrix.platform == 'android' && (github.event_name == 'push' || github.event_name == 'pull_request' || github.event.inputs.buildType == 'development' || github.event.inputs.buildType == 'all') }}
+        if: ${{ matrix.platform == 'android' && (github.event.inputs.buildType == 'development' || github.event.inputs.buildType == 'all') }}
         run: eas build --platform android --profile development --local --non-interactive --output ./build/tidyups-dev.apk
 
       - name: Build production APK
-        if: ${{ matrix.platform == 'android' && (github.event.inputs.buildType == 'android-apk' || github.event.inputs.buildType == 'all') }}
+        if: ${{ matrix.platform == 'android' && (github.event_name == 'push' || github.event_name == 'pull_request' || github.event.inputs.buildType == 'android-apk' || github.event.inputs.buildType == 'all') }}
         run: eas build --platform android --profile production-apk --local --non-interactive --output ./build/tidyups-prod.apk
 
       - name: Build production AAB
