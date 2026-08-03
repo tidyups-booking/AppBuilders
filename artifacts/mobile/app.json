@@ -33,6 +33,12 @@
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
-    }
+    },
+    "extra": {
+      "eas": {
+        "projectId": "a721a31d-ce67-4c50-9c88-1384a3a5b64f"
+      }
+    },
+    "owner": "bookscrubby"
   }
 }
