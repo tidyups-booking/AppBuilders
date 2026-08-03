@@ -1,0 +1,23 @@
+uploads = []
+generated = []
+
+[[outputs]]
+id = "qMToqgJ4rKEoQ_kniz_FY"
+uri = "file://app-store/icon/app-store-icon-1024.png"
+type = "image"
+title = "App Store icon (1024×1024)"
+description = "The App Store icon for 833 Tidyups Booking, ready to upload."
+
+[[outputs]]
+id = "2Prr4nQ_DBi-5WBy4djNw"
+uri = "file://app-store/screenshots/iphone-6.7/01-dashboard.png"
+type = "image"
+title = "App Store screenshot — Dashboard"
+description = "1290×2796 iPhone screenshot, App Store ready."
+
+[[outputs]]
+id = "bHSVlFDomZJkBoi1mkL7l"
+uri = "file://app-store/listing.md"
+type = "text"
+title = "App Store listing copy"
+description = "Name, subtitle, description, keywords, and submission notes."

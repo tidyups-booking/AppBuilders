@@ -1,0 +1,24 @@
+kind = "mobile"
+previewPath = "/mobile/"
+title = "833 Tidyups Mobile"
+description = "The mobile companion app for 833 Tidyups' internal booking tool. Staff use it on the go to view the dashboard, browse upcoming bookings, create new customer bookings quickly during phone calls, and update booking statuses. Shares the same bookings API and data as the web app."
+version = "1.0.0"
+id = "artifacts/mobile"
+router = "expo-domain"
+
+[[services]]
+name = "expo"
+ensurePreviewReachable = "/status"
+paths = [ "/mobile/" ]
+localPort = 18115
+
+[services.development]
+run = "pnpm --filter @workspace/mobile run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/mobile", "run", "build" ]
+run = [ "pnpm", "--filter", "@workspace/mobile", "run", "serve" ]
+
+[services.env]
+PORT = "18115"
+BASE_PATH = "/mobile/"
