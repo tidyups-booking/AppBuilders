@@ -30,8 +30,9 @@ Booking records are retained for as long as needed for business and legal purpos
 
 For any privacy questions or requests, contact 833 Tidyups:
 
-- Phone: (add your business phone)
-- Email: (add your business email)
+- Phone: 1-833-843-9877
+- Email: support@bookcleaning.app
+- Website: https://bookcleaning.app
 
 ## Changes
 

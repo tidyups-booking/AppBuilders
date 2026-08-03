@@ -45,9 +45,9 @@ cleaning,booking,scheduling,house cleaning,maid,appointments,edmonton,home servi
 
 | Field | Value |
 | --- | --- |
-| Support URL | (add your website or contact page) |
-| Marketing URL (optional) | (add your website) |
-| Privacy Policy URL | Required by Apple — host `privacy-policy.md` on your website and link it here |
+| Support URL | https://bookcleaning.app |
+| Marketing URL (optional) | https://bookcleaning.app |
+| Privacy Policy URL | https://bookcleaning.app/privacy |
 
 ## App Review Notes (for Apple reviewers)
 

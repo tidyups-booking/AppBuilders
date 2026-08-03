@@ -146,7 +146,27 @@ export default function PrivacyPolicy() {
             </p>
             <ul>
               <li>833 Tidyups — Edmonton, Alberta, Canada</li>
-              <li>Phone: 833-TIDYUPS</li>
+              <li>Phone: 1-833-843-9877</li>
+              <li>
+                Email:{' '}
+                <a
+                  href="mailto:support@bookcleaning.app"
+                  className="underline hover:text-foreground"
+                >
+                  support@bookcleaning.app
+                </a>
+              </li>
+              <li>
+                Website:{' '}
+                <a
+                  href="https://bookcleaning.app"
+                  className="underline hover:text-foreground"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  bookcleaning.app
+                </a>
+              </li>
             </ul>
           </section>
         </div>

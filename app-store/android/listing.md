@@ -49,9 +49,9 @@ BUILT FOR THE FIELD
 
 | Field | Value |
 | --- | --- |
-| Privacy Policy URL | Required — host `../privacy-policy.md` on your website and link it here |
-| Support email | (add your contact email — required by Play) |
-| Website (optional) | (add your website) |
+| Privacy Policy URL | https://bookcleaning.app/privacy |
+| Support email | support@bookcleaning.app |
+| Website (optional) | https://bookcleaning.app |
 
 ## Assets in this folder
 
