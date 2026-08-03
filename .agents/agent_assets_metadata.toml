@@ -21,3 +21,9 @@ uri = "file://app-store/listing.md"
 type = "text"
 title = "App Store listing copy"
 description = "Name, subtitle, description, keywords, and submission notes."
+
+[[outputs]]
+id = "Y5IG7CBvuK7nvr78EPDg8"
+uri = "file://.local/outputs/833-Tidyups-Project-Deck.pptx"
+type = "slides"
+title = "833 Tidyups Project Deck.pptx"
