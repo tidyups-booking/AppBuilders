@@ -1,0 +1,66 @@
+[
+  {
+    "id": "9e8c72ca-bd88-4455-96cf-14165e602622",
+    "position": 1,
+    "filepath": "src/pages/slides/Title.tsx",
+    "title": "833 Tidyups",
+    "description": "Title slide with logo on brand gradient",
+    "speakerNotes": ""
+  },
+  {
+    "id": "2ec9e17f-e7b2-4631-a543-cec6016aea63",
+    "position": 2,
+    "filepath": "src/pages/slides/Problem.tsx",
+    "title": "The problem",
+    "description": "Pain points before the booking platform",
+    "speakerNotes": ""
+  },
+  {
+    "id": "aa025241-dcec-44d5-bf5d-61ca4e18dc30",
+    "position": 3,
+    "filepath": "src/pages/slides/Solution.tsx",
+    "title": "The solution",
+    "description": "One booking platform across web and mobile",
+    "speakerNotes": ""
+  },
+  {
+    "id": "72e45c49-8bff-465f-99ef-94b8e46cea73",
+    "position": 4,
+    "filepath": "src/pages/slides/BookFast.tsx",
+    "title": "Book in under 60 seconds",
+    "description": "New Booking form with live price estimate",
+    "speakerNotes": ""
+  },
+  {
+    "id": "dc088b9d-5cd0-4970-aa4a-925867e31f15",
+    "position": 5,
+    "filepath": "src/pages/slides/Glance.tsx",
+    "title": "Everything at a glance",
+    "description": "Dashboard with revenue and upcoming jobs",
+    "speakerNotes": ""
+  },
+  {
+    "id": "c9ba5c19-0b4c-4d87-a62d-9b023628a6f3",
+    "position": 6,
+    "filepath": "src/pages/slides/JobControl.tsx",
+    "title": "Stay on top of every job",
+    "description": "Booking detail with status updates and tap-to-call",
+    "speakerNotes": ""
+  },
+  {
+    "id": "9eaaada9-314a-4bc9-83d8-90920c176eb3",
+    "position": 7,
+    "filepath": "src/pages/slides/AppStore.tsx",
+    "title": "Ready for the App Store",
+    "description": "Launch kit checklist",
+    "speakerNotes": ""
+  },
+  {
+    "id": "9da8bb6a-d74c-48aa-ba50-d892a4e76554",
+    "position": 8,
+    "filepath": "src/pages/slides/NextSteps.tsx",
+    "title": "What's next",
+    "description": "Roadmap to launch",
+    "speakerNotes": ""
+  }
+]
