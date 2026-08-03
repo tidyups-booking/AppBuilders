@@ -14,9 +14,12 @@
       "backgroundColor": "#ffffff"
     },
     "ios": {
-      "supportsTablet": false
+      "supportsTablet": false,
+      "bundleIdentifier": "com.tidyupsbooking.mobile"
     },
-    "android": {},
+    "android": {
+      "package": "com.tidyupsbooking.mobile"
+    },
     "web": {
       "favicon": "./assets/images/icon.png"
     },
