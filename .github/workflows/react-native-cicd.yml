@@ -26,7 +26,7 @@ on:
         type: choice
         description: Artifact type to build
         required: true
-        default: development
+        default: android-apk
         options:
           - development
           - android-apk
