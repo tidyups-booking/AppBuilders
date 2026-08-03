@@ -57,7 +57,7 @@ BUILT FOR THE FIELD
 
 - `screenshots/phone/` — 4 phone screenshots at 1080×2340 (Dashboard, All Bookings, New Booking, Booking Detail)
 - `feature-graphic/feature-graphic-1024x500.png` — required 1024×500 feature graphic
-- App icon: use `../icon/app-store-icon-1024.png` (Play requires 512×512 — downscale before upload)
+- App icon: `icon/play-icon-512.png` (512×512, 32-bit PNG)
 
 ## How to submit
 
