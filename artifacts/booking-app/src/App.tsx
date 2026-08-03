@@ -9,20 +9,26 @@ import Dashboard from '@/pages/dashboard';
 import BookingsList from '@/pages/bookings';
 import NewBooking from '@/pages/new-booking';
 import BookingDetail from '@/pages/booking-detail';
+import PrivacyPolicy from '@/pages/privacy';
 
 const queryClient = new QueryClient();
 
 function Router() {
   return (
-    <Layout>
-      <Switch>
-        <Route path="/" component={Dashboard} />
-        <Route path="/new" component={NewBooking} />
-        <Route path="/bookings" component={BookingsList} />
-        <Route path="/bookings/:id" component={BookingDetail} />
-        <Route component={NotFound} />
-      </Switch>
-    </Layout>
+    <Switch>
+      <Route path="/privacy" component={PrivacyPolicy} />
+      <Route>
+        <Layout>
+          <Switch>
+            <Route path="/" component={Dashboard} />
+            <Route path="/new" component={NewBooking} />
+            <Route path="/bookings" component={BookingsList} />
+            <Route path="/bookings/:id" component={BookingDetail} />
+            <Route component={NotFound} />
+          </Switch>
+        </Layout>
+      </Route>
+    </Switch>
   );
 }
 
