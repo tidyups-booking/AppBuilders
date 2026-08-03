@@ -64,6 +64,7 @@ This is an internal staff tool for 833 Tidyups (Edmonton, AB) used to book and m
 - `android/screenshots/phone/` — 4 Google Play phone screenshots at 1080×2340 (same four screens)
 - `android/feature-graphic/feature-graphic-1024x500.png` — Google Play feature graphic (required for Play listing promotion)
 - `raw/` — original captures (source files, not for upload)
+- `android/listing.md` — Google Play listing copy (title, short & full description, content rating notes)
 - `listing.md` — this file
 - `privacy-policy.md` — starter privacy policy to host on your site
 
